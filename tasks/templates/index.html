@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"> <!--Устанавливает кодировку UTF-8, чтобы корректно отображались все символы.-->
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!--Делает сайт адаптивным на мобильных устройствах: width=device-width — ширина равна ширине экрана, initial-scale=1 — начальный масштаб 100%.-->
+    <title>Task Tracker</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" <!--Подключает Bootstrap 5 (CSS-фреймворк) из CDN.-->
+
+  </head>
+  <body>
+    {% csrf_token %} <!--Генерирует CSRF-токен для защиты от межсайтовой подделки запросов (CSRF).-->
+      <div class="container"> <!--Контейнер для центрирования содержимого на странице.-->
+        <br>
+        <h2><strong>Task Tracker Прилуцкая А.В. 📝</strong></h2>
+
+        <br>
+
+         <ul class="list-group"> <!--Создает список с элементами списка.-->
+
+            <li class="list-group-item mb-2"> <!--Элемент списка с отступом снизу.-->
+              1. Проснуться.
+            </li> 
+            <li class="list-group-item mb-2">
+              2. Собраться (сходить в душ, позавтракать).
+            </li> 
+            <li class="list-group-item mb-2">
+              3. Добраться до вуза.
+            </li> 
+            <li class="list-group-item mb-2">
+              4. Получить знания в вузе.
+            </li> 
+            <li class="list-group-item mb-2">
+              5. Добраться до дома.
+            </li> 
+            <li class="list-group-item mb-2">
+              6. Устроить чаепитие с подругой.
+            </li> 
+            <li class="list-group-item mb-2">
+              7. Подготовиться ко сну.
+            </li>
+            <li class="list-group-item mb-2">
+              8. Почитать книгу и уснуть.
+            </li> 
+
+        </ul>
+
+
+
+      </div>
+
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>  <!--Подключает Bootstrap 5 (JavaScript) из CDN.-->
+
+
+
+  </body>
+</html>

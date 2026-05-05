@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <!-- Определяем кодировку символов для корректного отображения русского текста -->
+    <meta charset="UTF-8">
+    
+    <!-- Заголовок страницы, отображаемый на вкладке браузера -->
+    <title>Integrity Monitor Dashboard</title>
+    
+    <!-- Подключаем библиотеку Chart.js для построения графиков (подгружается с CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Внутренние CSS-стили для оформления страницы -->
+    <style>
+        /* Общие стили для тела страницы: шрифт, фон, отступы */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 20px;
+        }
+
+        /* Стиль для основного заголовка */
+        h1 {
+            color: #1f2937;
+        }
+
+        /* Контейнер-обёртка для центрирования содержимого */
+        .container {
+            width: 95%;
+            margin: auto;
+        }
+
+        /* Стиль карточки — белый блок с тенью и скруглёнными углами */
+        .card {
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Таблица на всю ширину, без двойных границ между ячейками */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* Стиль заголовков столбцов таблицы: синий фон, белый текст, отступы */
+        th {
+            background: #2563eb;
+            color: white;
+            padding: 12px;
+        }
+
+        /* Стиль ячеек таблицы: граница, отступы, выравнивание по центру */
+        td {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: center;
+        }
+
+        /* Зелёный цвет для статуса "OK" — файл не изменён */
+        .ok {
+            color: green;
+            font-weight: bold;
+        }
+
+        /* Красный цвет для статуса "MODIFIED" — обнаружена подмена */
+        .modified {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Оранжевый цвет для статуса "UNKNOWN" — файл отсутствует в эталонной базе */
+        .unknown {
+            color: orange;
+            font-weight: bold;
+        }
+
+        /* Контейнер для графиков: гибкое расположение рядом с отступом, перенос на новую строку при необходимости */
+        .charts {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <!-- Основной заголовок страницы -->
+    <h1>Панель мониторинга целостности ПО</h1>
+
+    <!-- Карточка с таблицей результатов проверки файлов -->
+    <div class="card">
+        <h2>Результаты проверки файлов</h2>
+
+        <!-- Таблица для отображения списка проверяемых файлов -->
+        <table>
+            <!-- Заголовки столбцов таблицы -->
+            <tr>
+                <th>Файл</th>
+                <th>Статус</th>
+                <th>Причина</th>
+            </tr>
+
+            <!-- Django-шаблонизатор: цикл по списку files, переданному из views.py -->
+            {% for item in files %}
+            <tr>
+                <!-- Выводим имя файла -->
+                <td>{{ item.file }}</td>
+                
+                <!-- Выводим статус с соответствующим цветом -->
+                <td>
+                    <!-- Условный оператор: выбираем цвет в зависимости от статуса -->
+                    {% if item.status == 'OK' %}
+                        <span class="ok">{{ item.status }}</span>
+                    {% elif item.status == 'MODIFIED' %}
+                        <span class="modified">{{ item.status }}</span>
+                    {% else %}
+                        <span class="unknown">{{ item.status }}</span>
+                    {% endif %}
+                </td>
+                
+                <!-- Выводим причину присвоения статуса -->
+                <td>{{ item.reason }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Карточка с визуализацией результатов -->
+    <div class="card">
+        <h2>Визуализация результатов</h2>
+        
+        <!-- Контейнер для двух графиков (располагаются рядом) -->
+        <div class="charts">
+            <!-- Холст для столбчатой диаграммы размером 400x300 пикселей -->
+            <canvas id="barChart" width="400" height="300"></canvas>
+            
+            <!-- Холст для круговой диаграммы размером 400x300 пикселей -->
+            <canvas id="pieChart" width="400" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript для построения графиков с использованием библиотеки Chart.js -->
+<script>
+    // Строим столбчатую диаграмму по элементу с id="barChart"
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',  // тип диаграммы: столбчатая
+        
+        data: {
+            labels: ['OK', 'MODIFIED', 'UNKNOWN'],  // подписи для столбцов (статусы)
+            datasets: [{
+                // Данные для столбцов: значения подставляются из Django-шаблона
+                data: [
+                    {{ ok_count }},        // количество файлов со статусом OK
+                    {{ modified_count }},  // количество файлов со статусом MODIFIED
+                    {{ unknown_count }}    // количество файлов со статусом UNKNOWN
+                ],
+                // Цвета столбцов в соответствии со статусами
+                backgroundColor: [
+                    'green',   // OK — зелёный
+                    'red',     // MODIFIED — красный
+                    'orange'   // UNKNOWN — оранжевый
+                ]
+            }]
+        },
+        // Дополнительные настройки отображения диаграммы
+        options: {
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Количество файлов'  // подпись оси Y
+                    },
+                    beginAtZero: true  // ось Y начинается с нуля
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false  // отключаем легенду (подписи к цветам), так как она избыточна
+                }
+            }
+        }
+    });
+
+    // Строим круговую диаграмму по элементу с id="pieChart"
+    new Chart(document.getElementById('pieChart'), {
+        type: 'pie',  // тип диаграммы: круговая
+        
+        data: {
+            labels: ['OK', 'MODIFIED', 'UNKNOWN'],  // подписи секторов
+            datasets: [{
+                // Данные для секторов (те же значения, что и для столбчатой диаграммы)
+                data: [
+                    {{ ok_count }},
+                    {{ modified_count }},
+                    {{ unknown_count }}
+                ],
+                // Цвета секторов
+                backgroundColor: [
+                    'green',
+                    'red',
+                    'orange'
+                ]
+            }]
+        }
+    });
+</script>
+
+</body>
+</html>
