@@ -19,6 +19,7 @@ def integrity_dashboard(request):
             "status": "MODIFIED",
             "reason": "Обнаружена подмена"
         },
+        
 
         {
             "file": "lib.dll",
