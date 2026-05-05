@@ -2,88 +2,346 @@
 <html lang="ru">
 
 <head>
-    <!-- Определяем кодировку символов для корректного отображения русского текста -->
     <meta charset="UTF-8">
-    
-    <!-- Заголовок страницы, отображаемый на вкладке браузера -->
-    <title>Integrity Monitor Dashboard</title>
-    
-    <!-- Подключаем библиотеку Chart.js для построения графиков (подгружается с CDN) -->
+    <title>Панель мониторинга целостности ПО</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Внутренние CSS-стили для оформления страницы -->
     <style>
-        /* Общие стили для тела страницы: шрифт, фон, отступы */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            margin: 20px;
-            
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #f0f7ff 0%, #e9f0fa 100%);
+            color: #1e293b;
+            padding: 30px 20px;
+            min-height: 100vh;
         }
 
-        /* Стиль для основного заголовка */
-        h1 {
-            color: #1f2937;
-        }
-
-        /* Контейнер-обёртка для центрирования содержимого */
         .container {
-            width: 95%;
-            margin: auto;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        /* Стиль карточки — белый блок с тенью и скруглёнными углами */
+        /* Заголовки */
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            color: #4b6b8f;
+            border-left: 3px solid #3b82f6;
+            padding-left: 14px;
+            margin-bottom: 32px;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(59,130,246,0.2);
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #3b5a7c;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Карточки */
         .card {
-            background: white;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(0px);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+            padding: 24px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(59,130,246,0.15);
+            transition: all 0.25s ease;
         }
 
-        /* Таблица на всю ширину, без двойных границ между ячейками */
+        .card:hover {
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59,130,246,0.25);
+            background: white;
+        }
+
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 18px 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .stat-card.total { border-bottom-color: #3b82f6; background: linear-gradient(135deg, #ffffff 0%, #f8fcff 100%);}
+        .stat-card.ok { border-bottom-color: #2e7d32; background: linear-gradient(135deg, #ffffff 0%, #f6fef7 100%);}
+        .stat-card.modified { border-bottom-color: #c62828; background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);}
+        .stat-card.unknown { border-bottom-color: #e65100; background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);}
+
+        .stat-card .number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .stat-card.total .number { color: #2563eb; }
+        .stat-card.ok .number { color: #2e7d32; }
+        .stat-card.modified .number { color: #c62828; }
+        .stat-card.unknown .number { color: #e65100; }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #4b6b8f;
+            margin-top: 8px;
+        }
+
+        /* Форма добавления */
+        .form-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(59,130,246,0.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .form-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #3b5a7c;
+            margin-bottom: 6px;
+            display: block;
+            letter-spacing: 0.4px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cfdfed;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            background: #ffffff;
+            transition: 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        button {
+            background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 36px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(59,130,246,0.25);
+            background: linear-gradient(105deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #1f3a5f;
+            border: 1px solid #cfdfed;
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background: #e6edf5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Легенда */
+        .legend-panel {
+            background: #f9fdfe;
+            border-radius: 40px;
+            padding: 10px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            border: 1px solid #dcebf5;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 14px;
+        }
+        .legend-color.ok { background-color: #2e7d32; box-shadow: 0 0 0 2px #dcfce7; }
+        .legend-color.modified { background-color: #c62828; box-shadow: 0 0 0 2px #ffe4e4; }
+        .legend-color.unknown { background-color: #e65100; box-shadow: 0 0 0 2px #ffede0; }
+
+        /* Таблица */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 18px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
         }
-
-        /* Стиль заголовков столбцов таблицы: синий фон, белый текст, отступы */
         th {
-            background: #2563eb;
-            color: white;
-            padding: 12px;
+            background: #eef3fc;
+            color: #1e3a5f;
+            padding: 14px 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
-
-        /* Стиль ячеек таблицы: граница, отступы, выравнивание по центру */
         td {
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            text-align: center;
+            padding: 13px 12px;
+            border-bottom: 1px solid #e4edf5;
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background: #fafeff;
         }
 
-        /* Зелёный цвет для статуса "OK" — файл не изменён */
-        .ok {
-            color: green;
-            font-weight: bold;
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-badge.ok { background: #e9f7eb; color: #2e7d32; border-left: 2px solid #2e7d32; }
+        .status-badge.modified { background: #fef0f0; color: #c62828; border-left: 2px solid #c62828; }
+        .status-badge.unknown { background: #fef5e8; color: #e65100; border-left: 2px solid #e65100; }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #90a9c4;
+            padding: 4px 10px;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+        .delete-btn:hover {
+            background: #fee2e2;
+            color: #c62828;
         }
 
-        /* Красный цвет для статуса "MODIFIED" — обнаружена подмена */
-        .modified {
-            color: red;
-            font-weight: bold;
+        /* Прогресс-бары */
+        .progress-section {
+            margin-top: 26px;
+            background: #fafdff;
+            padding: 12px 16px;
+            border-radius: 24px;
         }
-
-        /* Оранжевый цвет для статуса "UNKNOWN" — файл отсутствует в эталонной базе */
-        .unknown {
-            color: orange;
-            font-weight: bold;
+        .progress-item {
+            margin-bottom: 16px;
         }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .progress-bar-container {
+            background-color: #e1ecf5;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 8px;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-bar.ok { background-color: #2e7d32; }
+        .progress-bar.modified { background-color: #c62828; }
+        .progress-bar.unknown { background-color: #e65100; }
 
-        /* Контейнер для графиков: гибкое расположение рядом с отступом, перенос на новую строку при необходимости */
+        /* Графики */
         .charts {
             display: flex;
             gap: 30px;
             flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .chart-container {
+            flex: 1;
+            background: #fefefe;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #e2eff9;
+            transition: 0.2s;
+        }
+        canvas {
+            max-height: 260px;
+            width: 100%;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #6082a8;
+            margin-top: 32px;
+            border-top: 1px solid #cde1ef;
+            padding-top: 20px;
         }
     </style>
 </head>
@@ -91,127 +349,203 @@
 <body>
 
 <div class="container">
-    <!-- Основной заголовок страницы -->
     <h1>Панель мониторинга целостности ПО</h1>
+    <div class="subtitle">Контроль подмены программных компонентов | Интерактивный анализ</div>
 
-    <!-- Карточка с таблицей результатов проверки файлов -->
-    <div class="card">
-        <h2>Результаты проверки файлов</h2>
-
-        <!-- Таблица для отображения списка проверяемых файлов -->
-        <table>
-            <!-- Заголовки столбцов таблицы -->
-            <tr>
-                <th>Файл</th>
-                <th>Статус</th>
-                <th>Причина</th>
-            </tr>
-
-            <!-- Django-шаблонизатор: цикл по списку files, переданному из views.py -->
-            {% for item in files %}
-            <tr>
-                <!-- Выводим имя файла -->
-                <td>{{ item.file }}</td>
-                
-                <!-- Выводим статус с соответствующим цветом -->
-                <td>
-                    <!-- Условный оператор: выбираем цвет в зависимости от статуса -->
-                    {% if item.status == 'OK' %}
-                        <span class="ok">{{ item.status }}</span>
-                    {% elif item.status == 'MODIFIED' %}
-                        <span class="modified">{{ item.status }}</span>
-                    {% else %}
-                        <span class="unknown">{{ item.status }}</span>
-                    {% endif %}
-                </td>
-                
-                <!-- Выводим причину присвоения статуса -->
-                <td>{{ item.reason }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-
-    <!-- Карточка с визуализацией результатов -->
-    <div class="card">
-        <h2>Визуализация результатов</h2>
-        
-        <!-- Контейнер для двух графиков (располагаются рядом) -->
-        <div class="charts">
-            <!-- Холст для столбчатой диаграммы размером 400x300 пикселей -->
-            <canvas id="barChart" width="400" height="300"></canvas>
-            
-            <!-- Холст для круговой диаграммы размером 400x300 пикселей -->
-            <canvas id="pieChart" width="400" height="300"></canvas>
+    <!-- Статистические карточки с цветовой дифференциацией -->
+    <div class="stats-grid" id="statsContainer">
+        <div class="stat-card total">
+            <div class="number" id="totalCount">0</div>
+            <div class="label">Всего файлов</div>
+        </div>
+        <div class="stat-card ok">
+            <div class="number" id="okCount">0</div>
+            <div class="label">Целостность OK</div>
+        </div>
+        <div class="stat-card modified">
+            <div class="number" id="modifiedCount">0</div>
+            <div class="label">Обнаружено подмен</div>
+        </div>
+        <div class="stat-card unknown">
+            <div class="number" id="unknownCount">0</div>
+            <div class="label">Вне эталонной базы</div>
         </div>
     </div>
+
+    <!-- Форма добавления файла -->
+    <div class="form-panel">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Имя файла</label>
+                <input type="text" id="fileName" placeholder="например: security.dll" value="new_module.bin">
+            </div>
+            <div class="form-group">
+                <label>Статус</label>
+                <select id="fileStatus">
+                    <option value="OK">OK – целостность подтверждена</option>
+                    <option value="MODIFIED">MODIFIED – обнаружена подмена</option>
+                    <option value="UNKNOWN">UNKNOWN – отсутствует в базе</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Причина</label>
+                <input type="text" id="fileReason" placeholder="причина статуса" value="Добавлено оператором">
+            </div>
+            <div>
+                <button id="addBtn">+ Добавить файл</button>
+                <button id="resetBtn" class="btn-secondary">Сбросить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица с данными -->
+    <div class="card">
+        <h2>Результаты проверки файлов</h2>
+        <div class="legend-panel">
+            <div class="legend-item"><div class="legend-color ok"></div><span>OK – Не изменён</span></div>
+            <div class="legend-item"><div class="legend-color modified"></div><span>MODIFIED – Подмена</span></div>
+            <div class="legend-item"><div class="legend-color unknown"></div><span>UNKNOWN – Нет в базе</span></div>
+        </div>
+        <div class="table-wrapper">
+            <table id="fileTable">
+                <thead><tr><th>Файл</th><th>Статус</th><th>Причина</th><th style="width: 40px"></th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Прогресс-бары -->
+        <div class="progress-section">
+            <div class="progress-item"><div class="progress-label"><span>OK</span><span id="okPercent">0%</span></div><div class="progress-bar-container"><div class="progress-bar ok" id="okBar"></div></div></div>
+            <div class="progress-item"><div class="progress-label"><span>MODIFIED</span><span id="modPercent">0%</span></div><div class="progress-bar-container"><div class="progress-bar modified" id="modBar"></div></div></div>
+            <div class="progress-item"><div class="progress-label"><span>UNKNOWN</span><span id="unkPercent">0%</span></div><div class="progress-bar-container"><div class="progress-bar unknown" id="unkBar"></div></div></div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="card">
+        <h2>Визуализация данных</h2>
+        <div class="charts">
+            <div class="chart-container"><h3>Столбчатая диаграмма</h3><canvas id="barChart" width="400" height="260"></canvas></div>
+            <div class="chart-container"><h3>Круговая диаграмма</h3><canvas id="pieChart" width="400" height="260"></canvas></div>
+        </div>
+    </div>
+    <div class="footer">Безопасная передача данных | Актуальный контроль целостности</div>
 </div>
 
-<!-- JavaScript для построения графиков с использованием библиотеки Chart.js -->
 <script>
-    // Строим столбчатую диаграмму по элементу с id="barChart"
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',  // тип диаграммы: столбчатая
-        
-        data: {
-            labels: ['OK', 'MODIFIED', 'UNKNOWN'],  // подписи для столбцов (статусы)
-            datasets: [{
-                // Данные для столбцов: значения подставляются из Django-шаблона
-                data: [
-                    {{ ok_count }},        // количество файлов со статусом OK
-                    {{ modified_count }},  // количество файлов со статусом MODIFIED
-                    {{ unknown_count }}    // количество файлов со статусом UNKNOWN
-                ],
-                // Цвета столбцов в соответствии со статусами
-                backgroundColor: [
-                    'green',   // OK — зелёный
-                    'red',     // MODIFIED — красный
-                    'orange'   // UNKNOWN — оранжевый
-                ]
-            }]
-        },
-        // Дополнительные настройки отображения диаграммы
-        options: {
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Количество файлов'  // подпись оси Y
-                    },
-                    beginAtZero: true  // ось Y начинается с нуля
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false  // отключаем легенду (подписи к цветам), так как она избыточна
-                }
-            }
-        }
-    });
+    // Исходный эталон
+    let filesData = [
+        { file: "app.exe", status: "OK", reason: "Целостность подтверждена" },
+        { file: "config.cfg", status: "MODIFIED", reason: "Обнаружена подмена" },
+        { file: "lib.dll", status: "MODIFIED", reason: "Изменение библиотеки" },
+        { file: "driver.sys", status: "OK", reason: "Целостность подтверждена" },
+        { file: "unknown.bin", status: "UNKNOWN", reason: "Файл отсутствует в базе" }
+    ];
 
-    // Строим круговую диаграмму по элементу с id="pieChart"
-    new Chart(document.getElementById('pieChart'), {
-        type: 'pie',  // тип диаграммы: круговая
-        
-        data: {
-            labels: ['OK', 'MODIFIED', 'UNKNOWN'],  // подписи секторов
-            datasets: [{
-                // Данные для секторов (те же значения, что и для столбчатой диаграммы)
-                data: [
-                    {{ ok_count }},
-                    {{ modified_count }},
-                    {{ unknown_count }}
-                ],
-                // Цвета секторов
-                backgroundColor: [
-                    'green',
-                    'red',
-                    'orange'
-                ]
-            }]
-        }
-    });
+    let barChart, pieChart;
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function updateStats() {
+        const total = filesData.length;
+        const ok = filesData.filter(f => f.status === "OK").length;
+        const mod = filesData.filter(f => f.status === "MODIFIED").length;
+        const unk = filesData.filter(f => f.status === "UNKNOWN").length;
+
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('okCount').innerText = ok;
+        document.getElementById('modifiedCount').innerText = mod;
+        document.getElementById('unknownCount').innerText = unk;
+
+        let okPerc = total === 0 ? 0 : (ok / total * 100).toFixed(1);
+        let modPerc = total === 0 ? 0 : (mod / total * 100).toFixed(1);
+        let unkPerc = total === 0 ? 0 : (unk / total * 100).toFixed(1);
+
+        document.getElementById('okPercent').innerText = okPerc + '%';
+        document.getElementById('modPercent').innerText = modPerc + '%';
+        document.getElementById('unkPercent').innerText = unkPerc + '%';
+        document.getElementById('okBar').style.width = okPerc + '%';
+        document.getElementById('modBar').style.width = modPerc + '%';
+        document.getElementById('unkBar').style.width = unkPerc + '%';
+        return { ok, mod, unk, total };
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        filesData.forEach((item, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerHTML = `<strong>${escapeHtml(item.file)}</strong>`;
+            let statusClass = '';
+            if (item.status === 'OK') statusClass = 'ok';
+            else if (item.status === 'MODIFIED') statusClass = 'modified';
+            else statusClass = 'unknown';
+            row.insertCell(1).innerHTML = `<span class="status-badge ${statusClass}">${item.status}</span>`;
+            row.insertCell(2).innerText = item.reason;
+            const delBtn = document.createElement('button');
+            delBtn.innerText = '✕';
+            delBtn.className = 'delete-btn';
+            delBtn.onclick = () => { filesData.splice(idx, 1); fullRefresh(); };
+            const cell = row.insertCell(3);
+            cell.appendChild(delBtn);
+        });
+    }
+
+    function updateCharts(ok, mod, unk) {
+        if (barChart) barChart.destroy();
+        if (pieChart) pieChart.destroy();
+        barChart = new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: { labels: ['OK', 'MODIFIED', 'UNKNOWN'], datasets: [{ label: 'Количество файлов', data: [ok, mod, unk], backgroundColor: ['#2e7d32', '#c62828', '#e65100'], borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Файлы' } } } }
+        });
+        pieChart = new Chart(document.getElementById('pieChart'), {
+            type: 'pie',
+            data: { labels: ['OK', 'MODIFIED', 'UNKNOWN'], datasets: [{ data: [ok, mod, unk], backgroundColor: ['#2e7d32', '#c62828', '#e65100'] }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function fullRefresh() {
+        renderTable();
+        const st = updateStats();
+        updateCharts(st.ok, st.mod, st.unk);
+    }
+
+    function addFile() {
+        let name = document.getElementById('fileName').value.trim();
+        if (!name) { alert("Введите имя файла"); return; }
+        const status = document.getElementById('fileStatus').value;
+        let reason = document.getElementById('fileReason').value.trim();
+        if (!reason) reason = "Указано пользователем";
+        filesData.push({ file: name, status: status, reason: reason });
+        document.getElementById('fileName').value = '';
+        document.getElementById('fileReason').value = '';
+        fullRefresh();
+    }
+
+    function resetData() {
+        filesData = [
+            { file: "app.exe", status: "OK", reason: "Целостность подтверждена" },
+            { file: "config.cfg", status: "MODIFIED", reason: "Обнаружена подмена" },
+            { file: "lib.dll", status: "MODIFIED", reason: "Изменение библиотеки" },
+            { file: "driver.sys", status: "OK", reason: "Целостность подтверждена" },
+            { file: "unknown.bin", status: "UNKNOWN", reason: "Файл отсутствует в базе" }
+        ];
+        fullRefresh();
+    }
+
+    document.getElementById('addBtn').addEventListener('click', addFile);
+    document.getElementById('resetBtn').addEventListener('click', resetData);
+    fullRefresh();
 </script>
-
 </body>
 </html>
